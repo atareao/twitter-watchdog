@@ -56,9 +56,11 @@ async fn main() {
 
         }
     }
+    let feedback = Feedback::new("idea", "0", "nada", "", "", 0, "Twitter");
+    feedback.post(&url, &token).await;
     loop {
         thread::sleep(sleep_time);
-        match search(&twitter, &last_id).await{
+        match search(&url, &token, &twitter, &last_id).await{
             Some(new_last_id) => {
                 config.last_id = new_last_id.to_string();
                 config.save(&FILENAME);

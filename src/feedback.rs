@@ -27,8 +27,10 @@ impl Feedback{
 
     }
     pub async fn post(&self, url: &str, token: &str){
+        println!("{}", url);
         match Client::new()
             .post(url)
+            .header(reqwest::header::AUTHORIZATION, format!("Bearer {}", &token))
             .json(self)
             .send()
             .await{
