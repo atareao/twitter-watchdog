@@ -15,7 +15,8 @@ const FILENAME: &str = "lastid.toml";
 
 #[tokio::main]
 async fn main() {
-    dotenv().expect("Not found environment");
+    dotenv().ok();
+
     let mut config = Config::read("lastid.toml").expect("Can not read last id");
     let mut last_id = config.get_last_id().to_string();
     let url = env::var("URL")
