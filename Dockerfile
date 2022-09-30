@@ -46,7 +46,7 @@ RUN apk add --update --no-cache \
 
 # Set the work dir
 WORKDIR /app
-COPY entrypoint.sh support.db /app/
+COPY entrypoint.sh /app/
 COPY migrations/ /app/migrations/
 # Copy our build
 COPY --from=builder /app/target/x86_64-unknown-linux-musl/release/$APP /app/
