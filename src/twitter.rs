@@ -58,11 +58,15 @@ impl SearchTweets{
 #[derive(oauth::Request)]
 struct Tweet{
     status: String,
+    in_reply_to_status_id: String,
 }
 
 impl Tweet{
-    pub fn new(message: &str)->Self{
-        Tweet{status: message.to_string()}
+    pub fn new(message: &str, in_reply_to_status_id: &str)->Self{
+        Self{
+            status: message.to_string(),
+            in_reply_to_status_id: in_reply_to_status_id.to_string()
+        }
     }
     pub fn get_params(self) -> HashMap<String, String>{
         let mut result = HashMap::new();
@@ -86,9 +90,9 @@ impl Twitter{
         }
     }
 
-    pub async fn tweet(self, message: &str){
+    pub async fn post(&self, message: &str, in_reply_to_status_id: &str){
         let uri = format!("{}/1.1/statuses/update.json", BASE_URI);
-        let request = Tweet::new(message);
+        let request = Tweet::new(message, in_reply_to_status_id);
         let authorization_header = oauth::post(&uri, &request, &self.token,
             oauth::HMAC_SHA1);
         let client = reqwest::Client::new();
