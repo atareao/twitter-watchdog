@@ -1,0 +1,10 @@
+version: "3.7"
+services:
+  twitter-watchdog:
+    image: atareao/twitter-watchdog:latest
+    init: true
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./lastid.toml:/app/lastid.toml
