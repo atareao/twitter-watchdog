@@ -33,16 +33,14 @@ RUN cargo build  --target x86_64-unknown-linux-musl --release
 ###############################################################################
 ## Final image
 ###############################################################################
-FROM alpine:3.16
+FROM alpine:3.17
 
 ARG APP=twitter-watchdog
 
 RUN apk add --update --no-cache \
-            su-exec~=0.2-r1 \
-            tzdata~=2022c-r0 && \
+            su-exec~=0.2 \
     rm -rf /var/cache/apk && \
     rm -rf /var/lib/app/lists*
-# Copy the user
 
 # Set the work dir
 WORKDIR /app
