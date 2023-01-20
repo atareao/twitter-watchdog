@@ -82,17 +82,19 @@ async fn search(url: &str, token: &str, twitter: &Twitter, last_id: &str,
             println!("Name: {}", name);
             println!("Screen Name: {}", screen_name);
             if let Some(message) = check_key("idea", text){
-                let feedback = Feedback::new("idea", &new_last_id, text, name, screen_name, 0, "Twitter");
+                let feedback = Feedback::new("idea", &new_last_id, &message, name, screen_name, 0, "Twitter");
                 feedback.post(url, token).await;
                 let thanks_message = format!("muchas gracias por tu idea, @{}", screen_name);
                 twitter.post(&thanks_message, &new_last_id).await;
-                mattermost.post_message(idea_channel, &message, None).await;
+                let mm_message = format!("Src: Twitter. From: @{}. Content: {}", &screen_name, &message);
+                mattermost.post_message(idea_channel, &mm_message, None).await;
             }else if let Some(message) = check_key("pregunta", text){
-                let feedback = Feedback::new("pregunta", &new_last_id, text, name, screen_name, 0, "Twitter");
+                let feedback = Feedback::new("pregunta", &new_last_id, &message, name, screen_name, 0, "Twitter");
                 feedback.post(url, token).await;
                 let thanks_message = format!("muchas gracias por tu pregunta, @{}", screen_name);
                 twitter.post(&thanks_message, &new_last_id).await;
-                mattermost.post_message(pregunta_channel, &message, None).await;
+                let mm_message = format!("Src: Twitter. From: @{}. Content: {}", &screen_name, &message);
+                mattermost.post_message(pregunta_channel, &mm_message, None).await;
             }else if let Some(option) = check_comment("comentario", text){
                 let (commentario, reference) = option;
                 if let Some(message) = commentario{
@@ -104,12 +106,14 @@ async fn search(url: &str, token: &str, twitter: &Twitter, last_id: &str,
                     feedback.post(url, token).await;
                     let thanks_message = format!("muchas gracias por tu comentario, @{}", screen_name);
                     twitter.post(&thanks_message, &new_last_id).await;
-                    mattermost.post_message(comentario_channel, &message, None).await;
+                    let mm_message = format!("Src: Twitter. From: @{}. Content: {}", &screen_name, &message);
+                    mattermost.post_message(comentario_channel, &mm_message, None).await;
                 }
             }else{
                 let feedback = Feedback::new("mencion", &new_last_id, text, name, screen_name, 0, "Twitter");
                 feedback.post(url, token).await;
-                mattermost.post_message(mencion_channel, &text, None).await;
+                let mm_message = format!("Src: Twitter. From: @{}. Content: {}", &screen_name, &text);
+                mattermost.post_message(mencion_channel, &mm_message, None).await;
             }
         }
     }
