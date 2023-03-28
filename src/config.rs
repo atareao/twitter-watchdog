@@ -5,12 +5,12 @@ use std::fs;
 
 #[derive(Deserialize, Serialize)]
 pub struct Config{
-    last_id: i64,
+    pub last_id: String,
 }
 
 impl Config {
-    pub fn new(last_id: i64) -> Self{
-        Config { last_id }
+    pub fn new(last_id: &str) -> Self{
+        Config { last_id: last_id.to_string() }
     }
 
     pub fn read(filename: &str) -> Result<Config, std::io::Error>{
@@ -19,16 +19,21 @@ impl Config {
             println!("{}", data);
             let config: Config = toml::from_str(&data).unwrap();
             return Ok(config);
+        }else{
+            let config = Self::new("0");
+            match config.save(filename){
+                Ok(()) => return Ok(config),
+                Err(e) => Err(e),
+            }
         }
-        Err(std::io::Error::new(std::io::ErrorKind::NotFound, "File not found"))
     }
 
-    pub fn save(self, filename: &str) -> Result<(), std::io::Error>{
+    pub fn save(&self, filename: &str) -> Result<(), std::io::Error>{
         let toml = toml::to_string(&self).unwrap();
         fs::write(filename, toml)
     }
 
-    pub fn get_last_id(self) -> i64{
-        self.last_id
+    pub fn get_last_id(&self) -> &str{
+        &self.last_id
     }
 }
