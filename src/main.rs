@@ -65,7 +65,17 @@ async fn search(url: &str, token: &str, twitter: &Twitter, last_id: &str,
     let res = &twitter.get_mentions(&last_id).await;
     if res.is_ok(){
         let mut response: Map<String,Value> = serde_json::from_str(res.as_ref().unwrap()).unwrap();
-        let mut statuses = response.get_mut("statuses").unwrap().as_array().unwrap().to_owned();
+        println!("{:?}", response);
+        //let mut statuses = response.get_mut("statuses").unwrap().as_array().unwrap().to_owned();
+        let mut statuses = match response.get_mut("statuses"){
+            Some(statuses) => {
+                match statuses.as_array(){
+                    Some(array) => array.to_owned(),
+                    None => Vec::new(),
+                }
+            },
+            None => Vec::new()
+        };
         statuses.reverse();
         for status in statuses {
             //println!("{}", status);
