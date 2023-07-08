@@ -3,12 +3,13 @@ mod feedback;
 mod config;
 mod message;
 mod mattermost;
+mod zinc;
 
 use dotenv::dotenv;
 use std::{thread, time, env};
 use tokio;
-use crate::{twitter::Twitter, mattermost::Mattermost, config::Config, feedback::Feedback};
-use serde_json::{Map, Value};
+use crate::{twitter::Twitter, mattermost::Mattermost, config::Config, feedback::Feedback, zinc::Zinc};
+use serde_json::{Map, Value, json};
 use crate::message::{check_key, check_comment};
 
 const FILENAME: &str = "lastid.toml";
@@ -42,11 +43,15 @@ async fn main() {
     let pregunta_channel = mattermost.get_channel_by_name("atareao_pregunta").await.unwrap();
     let comentario_channel = mattermost.get_channel_by_name("atareao_comentario").await.unwrap();
     let mencion_channel = mattermost.get_channel_by_name("atareao_mencion").await.unwrap();
+    let zinc_base_url = env::var("ZINC_BASE_URL").expect("Not found zinc base url");
+    let zinc_indice = env::var("ZINC_INDICE").expect("Not found zinc indice");
+    let zinc_token = env::var("ZINC_TOKEN").expect("Not found token");
+    let zinc = Zinc::new(&zinc_base_url, &zinc_indice, &zinc_token);
     loop {
         thread::sleep(sleep_time);
         match search(&url, &token, &twitter, &last_id, &mattermost, 
                 &idea_channel, &pregunta_channel, &comentario_channel,
-                &mencion_channel).await{
+                &mencion_channel, &zinc).await{
             Some(new_last_id) => {
                 config.last_id = new_last_id.to_string();
                 config.save(&FILENAME);
@@ -60,7 +65,7 @@ async fn main() {
 
 async fn search(url: &str, token: &str, twitter: &Twitter, last_id: &str,
         mattermost: &Mattermost, idea_channel: &str, pregunta_channel: &str,
-        comentario_channel: &str, mencion_channel: &str) -> Option<String>{
+        comentario_channel: &str, mencion_channel: &str, zinc: &Zinc) -> Option<String>{
     let mut new_last_id: String = "".to_string();
     let res = &twitter.get_mentions(&last_id).await;
     if res.is_ok(){
@@ -98,6 +103,12 @@ async fn search(url: &str, token: &str, twitter: &Twitter, last_id: &str,
                 twitter.post(&thanks_message, &new_last_id).await;
                 let mm_message = format!("Src: Twitter. From: @{}. Content: {}", &screen_name, &message);
                 mattermost.post_message(idea_channel, &mm_message, None).await;
+                zinc.publish(&json!([{
+                    "src": "Twitter",
+                    "type": "idea",
+                    "from": format!("@{}", &screen_name),
+                    "message": &message,
+                }])).await.unwrap();
             }else if let Some(message) = check_key("pregunta", text){
                 let feedback = Feedback::new("pregunta", &new_last_id, &message, name, screen_name, 0, "Twitter");
                 feedback.post(url, token).await;
@@ -105,6 +116,12 @@ async fn search(url: &str, token: &str, twitter: &Twitter, last_id: &str,
                 twitter.post(&thanks_message, &new_last_id).await;
                 let mm_message = format!("Src: Twitter. From: @{}. Content: {}", &screen_name, &message);
                 mattermost.post_message(pregunta_channel, &mm_message, None).await;
+                zinc.publish(&json!([{
+                    "src": "Twitter",
+                    "type": "pregunta",
+                    "from": format!("@{}", &screen_name),
+                    "message": &message,
+                }])).await.unwrap();
             }else if let Some(option) = check_comment("comentario", text){
                 let (commentario, reference) = option;
                 if let Some(message) = commentario{
@@ -118,12 +135,24 @@ async fn search(url: &str, token: &str, twitter: &Twitter, last_id: &str,
                     twitter.post(&thanks_message, &new_last_id).await;
                     let mm_message = format!("Src: Twitter. From: @{}. Content: {}", &screen_name, &message);
                     mattermost.post_message(comentario_channel, &mm_message, None).await;
+                    zinc.publish(&json!([{
+                        "src": "Twitter",
+                        "type": "comentario",
+                        "from": format!("@{}", &screen_name),
+                        "message": &message,
+                    }])).await.unwrap();
                 }
             }else{
                 let feedback = Feedback::new("mencion", &new_last_id, text, name, screen_name, 0, "Twitter");
                 feedback.post(url, token).await;
                 let mm_message = format!("Src: Twitter. From: @{}. Content: {}", &screen_name, &text);
                 mattermost.post_message(mencion_channel, &mm_message, None).await;
+                zinc.publish(&json!([{
+                    "src": "Twitter",
+                    "type": "mencion",
+                    "from": format!("@{}", &screen_name),
+                    "message": &text,
+                }])).await.unwrap();
             }
         }
     }
