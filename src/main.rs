@@ -3,6 +3,7 @@ mod feedback;
 mod config;
 mod message;
 mod mattermost;
+mod matrix;
 mod zinc;
 
 use dotenv::dotenv;
@@ -71,6 +72,11 @@ async fn search(url: &str, token: &str, twitter: &Twitter, last_id: &str,
     if res.is_ok(){
         let mut response: Map<String,Value> = serde_json::from_str(res.as_ref().unwrap()).unwrap();
         println!("{:?}", response);
+        zinc.publish(&json!([{
+            "src": "Twitter",
+            "type": "search",
+            "message": res.as_ref().unwrap(),
+        }])).await.unwrap();
         //let mut statuses = response.get_mut("statuses").unwrap().as_array().unwrap().to_owned();
         let mut statuses = match response.get_mut("statuses"){
             Some(statuses) => {
@@ -155,6 +161,12 @@ async fn search(url: &str, token: &str, twitter: &Twitter, last_id: &str,
                 }])).await.unwrap();
             }
         }
+    }else{
+        zinc.publish(&json!([{
+            "src": "Twitter",
+            "type": "search",
+            "message": "Something goes wrong!!",
+        }])).await.unwrap();
     }
     if new_last_id != "" && new_last_id != last_id{
         return Some(new_last_id);
