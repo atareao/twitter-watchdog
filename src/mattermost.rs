@@ -171,7 +171,7 @@ mod tests{
     use crate::mattermost::Mattermost;
     use dotenv::dotenv;
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn list_channels() {
         dotenv().ok();
         let base_uri = std::env::var("MATTERMOST_BASE_URI").expect("BASE_URI not set");
@@ -184,7 +184,7 @@ mod tests{
         }
         println!("{:?}", res);
     }
-    #[actix_rt::test]
+    #[tokio::test]
     async fn find_channel() {
         dotenv().ok();
         let base_uri = std::env::var("MATTERMOST_BASE_URI").expect("BASE_URI not set");
@@ -194,7 +194,7 @@ mod tests{
         let res = mattermost.get_channel_by_name("correo").await;
         println!("{:?}", res);
     }
-    #[actix_rt::test]
+    #[tokio::test]
     async fn post_message() {
         dotenv().ok();
         let base_uri = std::env::var("MATTERMOST_BASE_URI").expect("BASE_URI not set");

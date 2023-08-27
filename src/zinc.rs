@@ -3,7 +3,7 @@ use reqwest::{Client, Response, StatusCode};
 use reqwest::header::{HeaderMap, HeaderValue, HeaderName};
 use std::str::FromStr;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Zinc{
     url: String,
     token: String,
@@ -64,7 +64,7 @@ mod tests{
     use serde_json::json;
     use dotenv::dotenv;
 
-    #[actix_rt::test]
+    #[tokio::test]
     async fn publish_in_zinc() {
         dotenv().ok();
         let base_url = std::env::var("ZINC_BASE_URL").expect("ZINC_BASE_URL not set");
@@ -79,4 +79,3 @@ mod tests{
         assert!(res.is_ok())
     }
 }
-
